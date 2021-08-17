@@ -57,7 +57,13 @@ fun staticHttpServer(folder: File, address: String = "127.0.0.1", port: Int = 0)
             if (requested.absolutePath.startsWith(absFolder.absolutePath)) {
                 val req = if (requested.exists() && requested.isDirectory) File(requested, "index.html") else requested
                 when {
-                    req.exists() && !req.isDirectory -> staticHttpServerRespond(t, FileContent(req))
+                    req.exists() && !req.isDirectory -> {
+                        if (req.name == "index.html") {
+                            staticHttpServerRespond(t, TextContent("${req.readText()}$VERSION_CHECKER", contentType = "text/html"), code = 200)
+                        } else {
+                            staticHttpServerRespond(t, FileContent(req))
+                        }
+                    }
                     else -> staticHttpServerRespond(t, TextContent("<h1>404 - Not Found</h1>", contentType = "text/html"), code = 404)
                 }
             } else {
@@ -228,3 +234,27 @@ fun Project.configureWebserver() {
     }
 
 }
+
+// language=html
+val VERSION_CHECKER = """
+<script type='text/javascript'>
+(async () => {
+    async function fetchVersion() {
+        return await (await fetch("/__version")).text()
+    }
+    async function delay(time) {
+        return new Promise((resolve, reject) => {
+            setTimeout(resolve, time)
+        })
+    }
+    let version = await fetchVersion()
+    while (true) {
+        await delay(4000);
+        const newVersion = await fetchVersion()
+        if (version !== newVersion) {
+            document.location.reload()
+        }
+    }
+})()
+</script>
+""".trimIndent()

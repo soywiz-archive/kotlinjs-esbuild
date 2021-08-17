@@ -1,5 +1,11 @@
+import kotlinx.browser.*
+
 fun main() {
-    console.log("Hello, ${greet()} 4")
+    window.addEventListener("load", {
+        val content = "Hello, ${greet()} 2"
+        console.log(content)
+        document.getElementById("root")?.textContent = content
+    })
 }
 
 fun greet() = "world"

@@ -1,5 +1,5 @@
 plugins {
-    kotlin("js") version "1.5.10"
+    kotlin("js") version "1.5.21"
 }
 
 group = "com.soywiz"
