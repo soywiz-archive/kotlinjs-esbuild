@@ -22,6 +22,11 @@ kotlin {
     }
 }
 
+// @TODO: HACK for webpack: https://youtrack.jetbrains.com/issue/KT-48273#focus=Comments-27-5122487.0-0
+rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin::class.java) {
+    rootProject.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().versions.webpackDevServer.version = "4.0.0-rc.0"
+}
+
 val wwwFolder = File(buildDir, "www")
 val esbuildFolder = File(buildDir, "esbuild")
 val isWindows get() = org.apache.tools.ant.taskdefs.condition.Os.isFamily(org.apache.tools.ant.taskdefs.condition.Os.FAMILY_WINDOWS)
@@ -82,9 +87,7 @@ for (debug in listOf(false, true)) {
                 add(File(buildDir, "js/node_modules/${project.name}/kotlin/${project.name}.js"))
                 add("--outfile=${File(wwwFolder, "${project.name}.js")}")
                 // @TODO: Close this command on CTRL+C
-                if (run) {
-                    add("--servedir=$wwwFolder")
-                }
+                //if (run) add("--servedir=$wwwFolder")
             })
         }
     }
