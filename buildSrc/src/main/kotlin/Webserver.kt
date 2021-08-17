@@ -249,7 +249,7 @@ val VERSION_CHECKER = """
     }
     let version = await fetchVersion()
     while (true) {
-        await delay(4000);
+        await delay(1000);
         const newVersion = await fetchVersion()
         if (version !== newVersion) {
             document.location.reload()
