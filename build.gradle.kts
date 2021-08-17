@@ -22,14 +22,20 @@ kotlin {
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// WEBPACK
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 // @TODO: HACK for webpack: https://youtrack.jetbrains.com/issue/KT-48273#focus=Comments-27-5122487.0-0
 rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin::class.java) {
     rootProject.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().versions.webpackDevServer.version = "4.0.0-rc.0"
 }
 
-val wwwFolder = File(buildDir, "www")
-val esbuildFolder = File(buildDir, "esbuild")
-val isWindows get() = org.apache.tools.ant.taskdefs.condition.Os.isFamily(org.apache.tools.ant.taskdefs.condition.Os.FAMILY_WINDOWS)
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ESBUILD
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+val esbuildFolder = File(rootProject.buildDir, "esbuild")
 val esbuildCmd = if (isWindows) File(esbuildFolder, "esbuild.cmd") else File(esbuildFolder, "esbuild")
 val env by lazy { org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.apply(project.rootProject).requireConfigured() }
 val npmCmd by lazy { File(env.nodeDir, if (env.isWindows) "npm.cmd" else "npm") }
@@ -64,31 +70,39 @@ val browserPrepareEsbuildRelease by tasks.creating(Task::class) {
 
 for (debug in listOf(false, true)) {
     val debugPrefix = if (debug) "Debug" else "Release"
+    val productionInfix = if (debug) "Development" else "Production"
     val browserPrepareEsbuild = when {
         debug -> browserPrepareEsbuildDebug
         else -> browserPrepareEsbuildRelease
     }
 
-    for (run in listOf(false, true)) {
-        val runSuffix = if (run) "Run" else ""
+    // browserDebugEsbuild
+    // browserReleaseEsbuild
+    // browserDebugEsbuildRun
+    // browserReleaseEsbuildRun
+    tasks.create("browser${debugPrefix}Esbuild", Exec::class) {
+        dependsOn(browserPrepareEsbuild)
 
-        // browserDebugEsbuild
-        // browserDebugEsbuildRun
-        // browserReleaseEsbuild
-        // browserReleaseEsbuildRun
-        tasks.create("browser${debugPrefix}Esbuild${runSuffix}", Exec::class) {
-            dependsOn(browserPrepareEsbuild)
-
-            commandLine(ArrayList<Any>().apply {
-                add(esbuildCmd)
-                //add("--watch",)
-                add("--bundle")
-                add("--minify")
-                add(File(buildDir, "js/node_modules/${project.name}/kotlin/${project.name}.js"))
-                add("--outfile=${File(wwwFolder, "${project.name}.js")}")
-                // @TODO: Close this command on CTRL+C
-                //if (run) add("--servedir=$wwwFolder")
-            })
+        val jsPath = tasks.getByName("compile${productionInfix}ExecutableKotlinJs").outputs.files.first {
+            it.extension.toLowerCase() == "js"
         }
+
+        commandLine(ArrayList<Any>().apply {
+            add(esbuildCmd)
+            //add("--watch",)
+            add("--bundle")
+            add("--minify")
+            add("--sourcemap=external")
+            add(jsPath)
+            add("--outfile=${File(wwwFolder, "${project.name}.js")}")
+            // @TODO: Close this command on CTRL+C or use another webserver for this
+            //if (run) add("--servedir=$wwwFolder")
+        })
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// RUN WITH A WEBBROWSER
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+configureWebserver()
