@@ -78,8 +78,6 @@ for (debug in listOf(false, true)) {
 
     // browserDebugEsbuild
     // browserReleaseEsbuild
-    // browserDebugEsbuildRun
-    // browserReleaseEsbuildRun
     tasks.create("browser${debugPrefix}Esbuild", Exec::class) {
         dependsOn(browserPrepareEsbuild)
 
@@ -89,14 +87,11 @@ for (debug in listOf(false, true)) {
 
         commandLine(ArrayList<Any>().apply {
             add(esbuildCmd)
-            //add("--watch",)
             add("--bundle")
             add("--minify")
             add("--sourcemap=external")
             add(jsPath)
             add("--outfile=${File(wwwFolder, "${project.name}.js")}")
-            // @TODO: Close this command on CTRL+C or use another webserver for this
-            //if (run) add("--servedir=$wwwFolder")
         })
     }
 }
@@ -105,4 +100,6 @@ for (debug in listOf(false, true)) {
 // RUN WITH A WEBBROWSER
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// browserDebugEsbuildRun
+// browserReleaseEsbuildRun
 configureWebserver()
